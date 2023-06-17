@@ -2,6 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/Alchemist-Spider.iml" filepath="$PROJECT_DIR$/Alchemist-Spider.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Alchemist-Spider.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Alchemist-Spider.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Alchemist-Spider.test.iml" filepath="$PROJECT_DIR$/.idea/modules/Alchemist-Spider.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/AlchemistPro.iml" filepath="$PROJECT_DIR$/AlchemistPro.iml" />
     </modules>
   </component>

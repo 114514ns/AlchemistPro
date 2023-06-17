@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="Gradle: cn.hutool:hutool-all:5.8.19" type="java-imported" external-system-id="GRADLE">
+    <properties groupId="cn.hutool" artifactId="hutool-all" version="5.8.19" />
+    <CLASSES>
+      <root url="jar://G:/repo/gradle/caches/modules-2/files-2.1/cn.hutool/hutool-all/5.8.19/f605613bbecdb8bafff9ad6843c54cd55750830a/hutool-all-5.8.19.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://G:/repo/gradle/caches/modules-2/files-2.1/cn.hutool/hutool-all/5.8.19/8ef7a1e3599da9cc5985733e6cf67d63e57ef724/hutool-all-5.8.19-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
