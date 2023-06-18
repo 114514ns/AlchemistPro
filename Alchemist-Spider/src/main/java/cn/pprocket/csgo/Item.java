@@ -1,12 +1,21 @@
 package cn.pprocket.csgo;
 
-import lombok.Data;
+import lombok.*;
 
-@Data
-
+@NoArgsConstructor
+@Getter
+@Setter
+@AllArgsConstructor
 public class Item {
-    public String name;
+
+    private String name;
+
     private float price;
-    public String chest;
+
+    private String chest;
+
+    private int buffId;
+
+    private DangerLevel level;
 
 }

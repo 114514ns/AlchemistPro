@@ -5,10 +5,12 @@ import cn.hutool.core.io.file.FileReader
 import cn.hutool.core.io.file.FileWriter
 import com.alibaba.fastjson2.JSON
 import com.alibaba.fastjson2.JSONObject
+import com.alibaba.fastjson2.TypeReference
 import java.io.File
 import java.util.concurrent.Executors
 
 object Buff {
+    var chests:List<Chest> = listOf()
     var pool = Executors.newFixedThreadPool(8)
     fun getChests(): MutableList<Chest> {
         var result = mutableListOf<Chest>()
@@ -75,23 +77,71 @@ object Buff {
             if (!it.contains("崭新出场") && !it.contains("略有磨损") && !it.contains("久经沙场") && !it.contains("破碎不堪") && !it.contains("战痕累累") ) {
                 flag = false
             }
+            if (it.contains("StatTrak")) {
+                flag = false
+            }
             if (flag) {
-
+                result.add(jsonObject.getInteger("buff_id"))
             }
         }
         return result
     }
-    fun getItems():List<Item> {
+    fun getItems(ids:List<Int>,chests:List<Chest>):List<Item> {
         var result = mutableListOf<Item>()
+        ids.forEach {
+            if (!contains(result,it)) {
+                var get = HttpUtil.get("https://buff.163.com/api/market/goods/info?goods_id=$it")
+                var parse = JSONObject.parse(get).getJSONObject("data")
+                var id = parse.getInteger("id")
+                var name = parse.getString("name")
+                var price = parse.getString("sell_min_price").toFloat()
+                var level = getLevel(name)
+                var item = Item(name,price, searchInChest(name).name,id,level)
+            }
+        }
+
         return result
     }
+    fun searchInChest(name: String,):Chest {
+        var chest = Chest()
+        chests.forEach {
+            for (item1 in it.getItems()) {
+                if (name.contains(item1.name)) {
+                    chest = it
+                }
+            }
+        }
+        return chest
+    }
+    fun getLevel(string: String):DangerLevel {
+        if (string.contains("崭新出厂")) return DangerLevel.FACTORY_NEW
+        if (string.contains("略有磨损")) return DangerLevel.MINIMAL_WORN
+        if (string.contains("久经沙场")) return DangerLevel.FIELD_TESTED
+        if (string.contains("破碎不堪")) return DangerLevel.WELL_WORN
+        else return DangerLevel.BATTLE_SCARRED
+    }
+    fun contains(list:List<Item>,id:Int):Boolean {
+        var result = false;
+        list.forEach {
+            if (it.buffId == id) {
+                result = true
+            }
+        }
+        return result
+    }
+
 }
+
 
 fun main() {
     Proxy.init()
     Thread.sleep(2000)
-    var chests = Buff.getChests()
-    var str = JSON.toJSONString(chests)
-    FileWriter.create(File("chests.json")).write(str)
+    //var chests = Buff.getChests()
+    //var str = JSON.toJSONString(chests)
+    Buff.chests = JSON.parseArray(FileReader(File("chests.json")).readString(),Chest::class.java)
+    var ids = Buff.getIds()
+    FileWriter.create(File("ids.txt")).writeLines(ids)
+    //Buff.getItems(ids,chests)
+    //FileWriter.create(File("chests.json")).write(str)
 
 }

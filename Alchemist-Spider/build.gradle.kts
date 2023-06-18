@@ -3,6 +3,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     id("java")
     kotlin("jvm") version "1.9.0-Beta"
+    kotlin("plugin.lombok") version "1.8.22"
+    id("io.freefair.lombok") version "5.3.0"
 }
 
 group = "org.example"
