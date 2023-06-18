@@ -27,6 +27,7 @@
                 <arg>G:/repo/gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-common/1.9.0-Beta/27e0b1122fa968ca2bf2ae5590e1522c3b9ff4d6/kotlin-stdlib-common-1.9.0-Beta.jar</arg>
                 <arg>G:/repo/gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar</arg>
                 <arg>G:/repo/gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-script-runtime/1.9.0-Beta/567464151d92a57090ab5a1701bb8b1c71af5bf6/kotlin-script-runtime-1.9.0-Beta.jar</arg>
+                <arg>$KOTLIN_BUNDLED$/lib/lombok-compiler-plugin.jar</arg>
               </args>
             </arrayArg>
             <arrayArg name="pluginOptions" />
@@ -48,6 +49,7 @@
     <orderEntry type="library" name="Gradle: cn.hutool:hutool-all:5.8.19" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.0-Beta" level="project" />
     <orderEntry type="library" name="Gradle: com.alibaba.fastjson2:fastjson2:2.0.33" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: org.projectlombok:lombok:1.18.16" level="project" />
     <orderEntry type="library" name="Gradle: org.junit.jupiter:junit-jupiter:5.9.1" level="project" />
     <orderEntry type="library" name="Gradle: com.squareup.okhttp3:okhttp-jvm:5.0.0-alpha.11" level="project" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.0-Beta" level="project" />

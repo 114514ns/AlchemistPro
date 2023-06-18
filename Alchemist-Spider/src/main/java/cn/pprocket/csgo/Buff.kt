@@ -97,6 +97,14 @@ object Buff {
                 var price = parse.getString("sell_min_price").toFloat()
                 var level = getLevel(name)
                 var item = Item(name,price, searchInChest(name).name,id,level)
+                result.add(item)
+                var related = parse.getJSONObject("relative_goods")
+                related.forEach {
+                    if (!(it.value as JSONObject).getString("tag_name").contains("")) {
+                        var item1 = Item()
+                    }
+                }
+
             }
         }
 
