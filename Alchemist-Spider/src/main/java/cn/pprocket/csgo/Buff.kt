@@ -170,6 +170,7 @@ object Buff {
 
 fun main() {
     Proxy.init()
+    
     println("请输入操作代码")
     println("1表示生成箱子列表")
     println("2表示生成物品列表")

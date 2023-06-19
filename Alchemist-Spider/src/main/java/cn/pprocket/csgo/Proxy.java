@@ -2,11 +2,14 @@ package cn.pprocket.csgo;
 
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson2.JSONObject;
+import okhttp3.OkHttpClient;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static cn.pprocket.csgo.HttpUtil.selector;
 
 public class Proxy {
     public static List<java.net.Proxy> proxies = new ArrayList<>();
@@ -35,12 +38,24 @@ public class Proxy {
             while (true) {
                 Collections.shuffle(proxies);
                 try {
-                    Thread.sleep(10);
+                    Thread.sleep(20);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
             }
         });
         t2.start();
+        new Thread(() -> {
+            while (true) {
+                cn.pprocket.csgo.HttpUtil.client = new OkHttpClient.Builder()
+                        .proxySelector(selector)
+                        .build();
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }).start();
     }
 }

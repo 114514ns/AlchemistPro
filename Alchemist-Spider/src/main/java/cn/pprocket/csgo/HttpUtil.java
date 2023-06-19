@@ -15,16 +15,21 @@ public class HttpUtil {
 
         @Override
         public List<java.net.Proxy> select(URI uri) {
+            //System.out.println("选择了一次代理");
             return Proxy.proxies;
         }
+
         @Override
         public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
 
         }
     };
+
+
     static OkHttpClient client = new OkHttpClient.Builder()
             .proxySelector(selector)
             .build();
+
     public static String get(String url) {
         String res = "";
         try {
@@ -33,6 +38,7 @@ public class HttpUtil {
                     .url(url)
                     .build();
             res = client.newCall(request).execute().body().string();
+            Thread.sleep(200);
         } catch (Exception e) {
             return get(url);
         }
