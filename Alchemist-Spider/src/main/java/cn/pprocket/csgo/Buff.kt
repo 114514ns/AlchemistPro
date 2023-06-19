@@ -7,11 +7,12 @@ import com.alibaba.fastjson2.JSON
 import com.alibaba.fastjson2.JSONObject
 import com.alibaba.fastjson2.TypeReference
 import java.io.File
+import java.util.*
 import java.util.concurrent.Executors
 
 object Buff {
-    var chests:List<Chest> = listOf()
-    var pool = Executors.newFixedThreadPool(8)
+    var chestList = mutableListOf<Chest>()
+    //var pool = Executors.newFixedThreadPool(8)
     fun getChests(): MutableList<Chest> {
         var result = mutableListOf<Chest>()
         for (i in 1..2) {
@@ -80,14 +81,26 @@ object Buff {
             if (it.contains("StatTrak")) {
                 flag = false
             }
+            if (it.contains("纪念品")) {
+                flag = false
+            }
             if (flag) {
                 result.add(jsonObject.getInteger("buff_id"))
             }
         }
         return result
     }
-    fun getItems(ids:List<Int>,chests:List<Chest>):List<Item> {
+    fun getItems(ids:List<Int>):List<Item> {
         var result = mutableListOf<Item>()
+
+        Thread {
+            while (true) {
+                var start = result.size
+                Thread.sleep(1000)
+                var end = result.size
+                println("${end-start}/s，已爬取： $end")
+            }
+        }.start()
         ids.forEach {
             if (!contains(result,it)) {
                 var get = HttpUtil.get("https://buff.163.com/api/market/goods/info?goods_id=$it")
@@ -96,23 +109,37 @@ object Buff {
                 var name = parse.getString("name")
                 var price = parse.getString("sell_min_price").toFloat()
                 var level = getLevel(name)
+                var shortName = parse.getString("short_name")
                 var item = Item(name,price, searchInChest(name).name,id,level)
                 result.add(item)
-                var related = parse.getJSONObject("relative_goods")
+                var related = parse.getJSONArray("relative_goods")
                 related.forEach {
-                    if (!(it.value as JSONObject).getString("tag_name").contains("")) {
+                    var obj = it as JSONObject
+                    var levelName = obj.getString("tag_name")
+                    var level = getLevel(levelName)
+                    var nameInside = "$shortName ($levelName)"
+                    if (!obj.getString("tag_name").contains("Stat") && !name.equals(nameInside)) { //排除暗金
                         var item1 = Item()
+                        var price = obj.getString("sell_min_price").toFloat()
+                        var id = obj.getInteger("goods_id")
+
+                        item1.buffId = id
+                        item1.name = nameInside
+                        item1.level = level
+                        item1.price = price
+                        item1.chest = searchInChest(name).name
+                        result.add(item1)
                     }
                 }
-
+                System.console()
             }
         }
 
         return result
     }
-    fun searchInChest(name: String,):Chest {
+    private fun searchInChest(name: String,):Chest {
         var chest = Chest()
-        chests.forEach {
+        chestList.forEach {
             for (item1 in it.getItems()) {
                 if (name.contains(item1.name)) {
                     chest = it
@@ -121,11 +148,11 @@ object Buff {
         }
         return chest
     }
-    fun getLevel(string: String):DangerLevel {
+    private fun getLevel(string: String):DangerLevel {
         if (string.contains("崭新出厂")) return DangerLevel.FACTORY_NEW
         if (string.contains("略有磨损")) return DangerLevel.MINIMAL_WORN
         if (string.contains("久经沙场")) return DangerLevel.FIELD_TESTED
-        if (string.contains("破碎不堪")) return DangerLevel.WELL_WORN
+        if (string.contains("破损不堪")) return DangerLevel.WELL_WORN
         else return DangerLevel.BATTLE_SCARRED
     }
     fun contains(list:List<Item>,id:Int):Boolean {
@@ -143,13 +170,24 @@ object Buff {
 
 fun main() {
     Proxy.init()
+    println("请输入操作代码")
+    println("1表示生成箱子列表")
+    println("2表示生成物品列表")
     Thread.sleep(2000)
-    //var chests = Buff.getChests()
-    //var str = JSON.toJSONString(chests)
-    Buff.chests = JSON.parseArray(FileReader(File("chests.json")).readString(),Chest::class.java)
-    var ids = Buff.getIds()
-    FileWriter.create(File("ids.txt")).writeLines(ids)
-    //Buff.getItems(ids,chests)
-    //FileWriter.create(File("chests.json")).write(str)
 
+    var int = Scanner(System.`in`).nextInt()
+
+    when (int) {
+        OPCode.GEN_CHESTS.ordinal ->{
+            var chests = Buff.getChests()
+            var str = JSON.toJSONString(chests)
+            FileWriter.create(File("chests.json")).write(str)
+        }
+        OPCode.GEN_ITEMS.ordinal -> {
+            Buff.chestList = JSON.parseArray(FileReader(File("chests.json")).readString(),Chest::class.java)
+            var items = Buff.getItems(Buff.getIds())
+            FileWriter.create(File("items.json")).write(JSONObject.toJSONString(items))
+        }
+
+    }
 }

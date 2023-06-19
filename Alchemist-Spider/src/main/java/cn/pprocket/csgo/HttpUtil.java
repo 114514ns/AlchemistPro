@@ -24,10 +24,8 @@ public class HttpUtil {
     };
     static OkHttpClient client = new OkHttpClient.Builder()
             .proxySelector(selector)
-            //.addInterceptor(new RetryInterceptor(3))
             .build();
     public static String get(String url) {
-        long start = System.currentTimeMillis();
         String res = "";
         try {
             Request request = new Request.Builder()
@@ -38,8 +36,6 @@ public class HttpUtil {
         } catch (Exception e) {
             return get(url);
         }
-        long end = System.currentTimeMillis();
-        //System.out.println("耗时：  " + (end-start));
         return res;
     }
 }
