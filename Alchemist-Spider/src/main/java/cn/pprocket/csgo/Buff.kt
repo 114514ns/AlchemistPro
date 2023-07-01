@@ -67,18 +67,28 @@ object Buff {
             var flag = true
             var jsonObject = JSONObject.parse(it)
             if (!it.contains("csgo")) {
-                flag = false
+                flag = false //排除dota里的东西
             }
             if (it.contains("印花") && !it.contains("印花集")) {
-                flag = false;
+                flag = false; //排除贴纸
             }
             if (it.matches(Regex("[a-zA-Z]+"))) {
-                flag = false
+                flag = false //排除英文
             }
+            /*
             if (!it.contains("崭新出场") && !it.contains("略有磨损") && !it.contains("久经沙场") && !it.contains("破碎不堪") && !it.contains("战痕累累") ) {
                 flag = false
             }
+
+             */
+
             if (it.contains("StatTrak")) {
+                flag = false
+            }
+            if (it.contains("纪念品")) {
+                flag = false
+            }
+            if (!it.contains("崭新出厂")) {
                 flag = false
             }
             if (it.contains("纪念品")) {
@@ -93,14 +103,15 @@ object Buff {
     fun getItems(ids:List<Int>):List<Item> {
         var result = mutableListOf<Item>()
 
-        Thread {
+        var t = Thread {
             while (true) {
                 var start = result.size
                 Thread.sleep(1000)
                 var end = result.size
                 println("${end-start}/s，已爬取： $end")
             }
-        }.start()
+        }
+        t.start()
         ids.forEach {
             if (!contains(result,it)) {
                 var get = HttpUtil.get("https://buff.163.com/api/market/goods/info?goods_id=$it")
@@ -118,6 +129,7 @@ object Buff {
                     var levelName = obj.getString("tag_name")
                     var level = getLevel(levelName)
                     var nameInside = "$shortName ($levelName)"
+
                     if (!obj.getString("tag_name").contains("Stat") && !name.equals(nameInside)) { //排除暗金
                         var item1 = Item()
                         var price = obj.getString("sell_min_price").toFloat()
@@ -134,6 +146,8 @@ object Buff {
                 System.console()
             }
         }
+        result.removeIf { it.chest == null }
+        t.stop()
 
         return result
     }

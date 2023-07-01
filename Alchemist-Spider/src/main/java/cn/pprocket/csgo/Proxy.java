@@ -36,11 +36,11 @@ public class Proxy {
         t.start();
         Thread t2 = new Thread(() -> {
             while (true) {
-                Collections.shuffle(proxies);
                 try {
+                    Collections.shuffle(proxies);
                     Thread.sleep(20);
                 } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+
                 }
             }
         });
