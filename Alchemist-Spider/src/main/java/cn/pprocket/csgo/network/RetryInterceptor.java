@@ -1,9 +1,8 @@
-package cn.pprocket.csgo;
+package cn.pprocket.csgo.network;
 
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 

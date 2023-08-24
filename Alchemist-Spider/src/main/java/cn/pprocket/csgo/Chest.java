@@ -1,5 +1,6 @@
 package cn.pprocket.csgo;
 
+import cn.pprocket.csgo.item.Item;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

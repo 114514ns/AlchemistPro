@@ -1,6 +1,5 @@
-package cn.pprocket.csgo;
+package cn.pprocket.csgo.network;
 
-import cn.hutool.aop.ProxyUtil;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
@@ -11,7 +10,7 @@ import java.net.URI;
 import java.util.List;
 
 public class HttpUtil {
-    static ProxySelector selector = new ProxySelector() {
+    public static ProxySelector selector = new ProxySelector() {
 
         @Override
         public List<java.net.Proxy> select(URI uri) {
