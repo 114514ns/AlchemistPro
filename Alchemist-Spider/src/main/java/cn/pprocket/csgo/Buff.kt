@@ -3,11 +3,13 @@ package cn.pprocket.csgo
 
 import cn.hutool.core.io.file.FileReader
 import cn.hutool.core.io.file.FileWriter
+import cn.pprocket.csgo.Buff.getIds
 import cn.pprocket.csgo.item.Item
 import cn.pprocket.csgo.network.HttpUtil
 import cn.pprocket.csgo.network.Proxy
 import com.alibaba.fastjson2.JSON
 import com.alibaba.fastjson2.JSONObject
+import com.alibaba.fastjson2.JSONPObject
 import java.io.File
 import java.util.*
 import java.util.concurrent.Executors
@@ -15,6 +17,8 @@ import java.util.concurrent.Executors
 object Buff {
     var chestList: MutableList<Chest> = mutableListOf()
     var service = Executors.newFixedThreadPool(8)
+
+
     //var pool = Executors.newFixedThreadPool(8)
     fun getChests(): MutableList<Chest> {
         var result = mutableListOf<Chest>()
@@ -27,7 +31,17 @@ object Buff {
                 }
             }&page_num=1&page_size=60"
             var res = HttpUtil.get(query)
+            if (res.contains("猎杀者武器箱")) {
+                continue
+            }
             var v1 = JSONObject.parse(res).getJSONObject("data").getJSONArray("items")
+            if (i == 2) {
+                val chest = JSONObject()
+                chest["name"] = "猎杀者收藏品"
+                chest["value"] = "set_community_3"
+                v1.add(chest)
+
+            }
             v1.forEach {
                 var obj = it as JSONObject
                 var chestName = obj["name"]
@@ -53,28 +67,45 @@ object Buff {
                     var var1 = it as JSONObject
                     item.name = var1.getString("localized_name")
                     item.chest = chestName
-                    var qualityText = it.getJSONObject("goods").getJSONObject("tags").getJSONObject("rarity").getString("localized_name")
-                    when(qualityText) {
+                    var qualityText = it.getJSONObject("goods").getJSONObject("tags").getJSONObject("rarity")
+                        .getString("localized_name")
+                    when (qualityText) {
                         "普通" -> {
                             item.level = Level.MYTHICAL
                         }
+
                         "军规级" -> {
                             item.level = Level.RARE
                         }
+
                         "保密" -> {
                             item.level = Level.LEGENDARY
                         }
+
                         "隐秘" -> {
                             item.level = Level.ANCIENT
                         }
+
                         "消费级" -> {
                             item.level = Level.COMMON
                         }
+
                         "工业级" -> {
                             item.level = Level.UNCOMMON
                         }
+
+                        "受限" -> {
+                            item.level = Level.MYTHICAL
+                        }
                     }
-                    items.add(item)
+                    if (item.level == null) {
+                        System.console()
+                    }
+                    if (!item.name.contains("收藏包")) {
+                        items.add(item)
+                    } else {
+                        println("跳过${item.name}")
+                    }
 
                 }
                 chest.items = items
@@ -84,7 +115,9 @@ object Buff {
         }
         return result
     }
-    fun getIds():List<Int> {
+
+    fun getIds(): List<Int> {
+        var start = System.currentTimeMillis()
         var result = mutableListOf<Int>()
         var lines = FileReader.create(File("input.json")).readLines()
         lines.forEach {
@@ -109,28 +142,41 @@ object Buff {
             if (it.contains("StatTrak")) {
                 flag = false
             }
+            if (it.contains("X 射线")) {
+                flag = false
+            }
             if (it.contains("纪念品")) {
                 flag = false
             }
             if (!it.contains("崭新出厂")) {
                 flag = false //只向buff获取崭新的物品信息，返回的信息会包含其他磨损的，这样可以少发了四倍的请求
             }
+            if (it.contains("刀") || it.contains("匕") || it.contains("短剑")) {
+                flag = false
+            }
+            if (it.contains("手套") || it.contains("裹手")) {
+                flag = false
+            }
+
             if (flag) {
                 result.add(jsonObject.getInteger("buff_id"))
             }
         }
+        println("生成物品id耗时： ${System.currentTimeMillis() - start}ms 总计 ${result.size}个物品")
         return result
     }
-    fun getLevel(string: String):Level {
+
+    fun getLevel(string: String): Level {
         if (string == "消费级") return Level.COMMON
         if (string == "工业级") return Level.UNCOMMON
         if (string == "军规级") return Level.RARE
-        if (string == "受限级") return Level.MYTHICAL
-        if (string == "保密级") return Level.LEGENDARY
-        if (string == "隐秘级") return Level.ANCIENT
+        if (string == "受限") return Level.MYTHICAL
+        if (string == "保密") return Level.LEGENDARY
+        if (string == "隐秘") return Level.ANCIENT
         return Level.ERROR
     }
-    fun getItems(ids:List<Int>):List<Item> {
+
+    fun getItems(ids: List<Int>): List<Item> {
         var result = mutableListOf<Item>()
 
         var t = Thread {
@@ -138,19 +184,22 @@ object Buff {
                 var start = result.size
                 Thread.sleep(1000)
                 var end = result.size
-                println("${end-start}/s，已爬取： $end")
+                println("${end - start}/s，已爬取： $end")
             }
         }
         t.start()
         ids.forEach {
-            if (!contains(result,it)) {
+            if (!contains(result, it)) {
                 service.submit {
                     var get = HttpUtil.get("https://buff.163.com/api/market/goods/info?goods_id=$it")
                     var parse = JSONObject.parse(get).getJSONObject("data")
                     var name = parse.getString("name")
                     var shortName = parse.getString("short_name")
                     var related = parse.getJSONArray("relative_goods")
-                    var level = getLevel(parse.getJSONObject("goods_info").getJSONObject("info").getJSONObject("tags").getJSONObject("rarity").getString("localized_name"))
+                    var level = getLevel(
+                        parse.getJSONObject("goods_info").getJSONObject("info").getJSONObject("tags")
+                            .getJSONObject("rarity").getString("localized_name")
+                    )
                     related.forEach {
                         var obj = it as JSONObject
                         var levelName = obj.getString("tag_name")
@@ -166,47 +215,67 @@ object Buff {
                             item1.level = level
                             item1.price = price
                             var chest = searchInChest(name)
-                            if (name.contains("USP 消音版 | 猎户")) {
-                                chest = Chests.forName("猎杀者武器箱")
-                            }
+
                             var higher = mutableListOf<String>()
                             chest.items.forEach {
-                                higher.add(it.name)
+                                val v1 = it.level.ordinal
+                                val v2 = item1.level.ordinal + 1
+                                if (v1 == v2) {
+                                    higher.add(it.name)
+                                }
                             }
                             item1.higher = higher
                             item1.chest = chest.name
-                            result.add(item1)
+                            if (!item1.name.contains("纪念品")) {
+                                result.add(item1)
+                            }
                         }
                     }
                     System.console()
+                    if (it == ids.last()) {
+                        println("爬取完成")
+                        t.stop()
+                        service.shutdown()
+                    }
                 }
+
             }
         }
+        while (!service.isShutdown) {
+            Thread.sleep(100)
+        }
+
         result.removeIf { it.chest == null }
-        result.removeIf {it.level == Level.ANCIENT}
+        result.removeIf { it.level == Level.ANCIENT }
         t.stop()
 
         return result
     }
-    private fun searchInChest(name: String):Chest {
+
+    private fun searchInChest(name: String): Chest {
         var chest = Chest()
         chestList.forEach {
             for (item1 in it.getItems()) {
                 if (name.contains(item1.name)) {
-                    chest = it
+                    return it
+                }
+                if (name.contains("USP 消音版 | 猎户")) {
+                    return Chests.forName("猎杀者武器箱")
                 }
             }
         }
         return chest
     }
-    private fun getDamage(string: String):DangerLevel {
+
+    private fun getDamage(string: String): DangerLevel {
         if (string.contains("崭新出厂")) return DangerLevel.FACTORY_NEW
         if (string.contains("略有磨损")) return DangerLevel.MINIMAL_WORN
         if (string.contains("久经沙场")) return DangerLevel.FIELD_TESTED
         if (string.contains("破损不堪")) return DangerLevel.WELL_WORN
         else return DangerLevel.BATTLE_SCARRED
     }
-    fun contains(list:List<Item>, id:Int):Boolean {
+
+    fun contains(list: List<Item>, id: Int): Boolean {
         var result = false;
         list.forEach {
             if (it.buffId == id) {
@@ -221,31 +290,44 @@ object Buff {
 
 fun main() {
     Proxy.init()
-    
+
     println("请输入操作代码")
     println("1表示生成箱子列表")
     println("2表示生成物品列表")
+    println("3表示生成id列表")
     Thread.sleep(2000)
 
     var int = Scanner(System.`in`).nextInt()
 
     when (int) {
-        OPCode.GEN_CHESTS.ordinal ->{
+        OPCode.GEN_CHESTS.ordinal -> {
             var chests = Buff.getChests()
             var str = JSON.toJSONString(chests)
             FileWriter.create(File("chests.json")).write(str)
         }
+
         OPCode.GEN_ITEMS.ordinal -> {
 
-            Buff.chestList = JSON.parseArray(FileReader(File("chests.json")).readString(),Chest::class.java)
+            Buff.chestList = JSON.parseArray(FileReader(File("chests.json")).readString(), Chest::class.java)
             var items = Buff.getItems(Buff.getIds())
             FileWriter.create(File("items.json")).write(JSONObject.toJSONString(items))
         }
 
+        OPCode.GEN_IDS.ordinal -> {
+            var ids = getIds()
+            val file = File("ids.json")
+            if (!file.exists()) {
+                file.createNewFile()
+            }
+            FileWriter.create(file).write(JSONObject.toJSONString(ids))
+        }
+
     }
 }
+
 enum class OPCode {
-    GEN_IDS,
+    PLACE_HOLDER,
     GEN_CHESTS,
-    GEN_ITEMS
+    GEN_ITEMS,
+    GEN_IDS
 }

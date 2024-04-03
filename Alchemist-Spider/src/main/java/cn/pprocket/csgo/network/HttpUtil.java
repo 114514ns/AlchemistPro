@@ -37,7 +37,7 @@ public class HttpUtil {
                     .url(url)
                     .build();
             res = client.newCall(request).execute().body().string();
-            Thread.sleep(200);
+            Thread.sleep(80);
         } catch (Exception e) {
             return get(url);
         }
