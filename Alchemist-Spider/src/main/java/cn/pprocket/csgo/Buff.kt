@@ -216,7 +216,7 @@ object Buff {
                         var nameInside = "$shortName ($levelName)"
                         if (!obj.getString("tag_name").contains("Stat") /*&& !name.equals(nameInside)*/) { //排除暗金
                             var item1 = Item()
-                            var price = obj.getString("sell_min_price").toFloat()
+                            var price = obj.getString("sell_min_price").toDouble()
                             var id = obj.getInteger("goods_id")
                             item1.buffId = id
                             item1.name = nameInside

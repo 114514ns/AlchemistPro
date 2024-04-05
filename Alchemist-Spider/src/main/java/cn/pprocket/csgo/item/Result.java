@@ -13,4 +13,5 @@ public class Result {
     public DangerLevel dangerLevel;
     public float amountValue;
     public double rate;
+    public double price;
 }

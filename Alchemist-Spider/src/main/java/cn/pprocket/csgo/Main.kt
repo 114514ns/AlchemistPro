@@ -26,65 +26,89 @@ object Main {
         //Tools.writeFile(gson.toJson(itemList),"items.json");
         //System.exit(0);
         val start = System.currentTimeMillis()
-        val results: MutableList<Result> = ArrayList<Result>()
-        val service = Executors.newFixedThreadPool(12)
+
+        val service = Executors.newFixedThreadPool(8)
+        val solutions = mutableListOf<Solution>()
+
         for (l in 0..4) {
+            var times = 0
 
             while (true) {
-                val recipes = mutableListOf<Item>()
-                var count = 0
-                while (true) {
-                    val item = RandomUtil.randomEle(itemList)
-                    if (item.level.ordinal == l) {
-                        item.dangerValue = randomDanger(item.name)
-                        recipes.add(item)
-                        count++
-                        if (count == 10) {
-                            break
+                if (times >= 1000000) {
+                    break
+                }
+                times++
+                service.submit {
+                    val recipes = mutableListOf<Item>()
+                    var count = 0
+                    while (true) {
+                        val item = RandomUtil.randomEle(itemList)
+                        if (item.level.ordinal == l) {
+                            item.dangerValue = randomDanger(item.name)
+                            recipes.add(item)
+                            count++
+                            if (count == 10) {
+                                break
+                            }
                         }
                     }
-                }
-                var average = getAverageAmount(recipes)
-                val map = mutableMapOf<String, Int>()
-                val newMap = mutableMapOf<List<Item>, Double>()
-                recipes.forEach {
-                    if (map.containsKey(it.chest)) {
-                        map[it.chest] = map[it.chest]!! + 1
-                    } else {
-                        map[it.chest] = 1
-                    }
-                }
-                map.forEach {
-                    val list = mutableListOf<Item>()
-                    val name = it.key
+                    val results: MutableList<Result> = ArrayList<Result>()
+                    var average = getAverageAmount(recipes)
+                    val map = mutableMapOf<String, Int>()
+                    val newMap = mutableMapOf<List<Item>, Double>()
                     recipes.forEach {
-                        if (it.chest.equals(name)) {
-                            list.add(it)
+                        if (map.containsKey(it.chest)) {
+                            map[it.chest] = map[it.chest]!! + 1
+                        } else {
+                            map[it.chest] = 1
                         }
                     }
-                    newMap[list] = it.value.toDouble() / 10
-                }
-                var flag = true
-                newMap.forEach loop@{
-                    val total = it.value
-                    val size = it.key.size
-                    var itemByLevel = getItemsByLevel(it.key[0].chest, it.key[0].level)
-                    itemByLevel.forEach {
-                        val result = Result()
-                        var wearAmount = getWearAmount(average.toFloat())
-                        var specificItem = getSpecificItem(it.name, wearAmount)
-                        if (specificItem.name == null) {
-                            flag = false
+                    map.forEach {
+                        val list = mutableListOf<Item>()
+                        val name = it.key
+                        recipes.forEach {
+                            if (it.chest.equals(name)) {
+                                list.add(it)
+                            }
+                        }
+                        newMap[list] = it.value.toDouble() / 10
+                    }
+                    var flag = true
+                    newMap.forEach loop@{
+                        val total = it.value
+                        val size = it.key.size
+                        var itemByLevel = getItemsByLevel(it.key[0].chest, it.key[0].level)
+                        itemByLevel.forEach {
+                            val result = Result()
+                            var wearAmount = getWearAmount(average.toFloat())
+                            var specificItem = getSpecificItem(it.name, wearAmount)
+                            if (specificItem.name == null) {
+                                flag = false
 
+                            }
+                            result.setOriginItem(specificItem)
+                            result.setRate(total / itemByLevel.size)
+                            result.setPrice(specificItem.price)
+                            result.setAmountValue(average.toFloat())
+                            results.add(result)
                         }
-                        result.setOriginItem(specificItem)
-                        result.setRate(total / itemByLevel.size)
-                        result.setAmountValue(average.toFloat())
-                        results.add(result)
+                    }
+                    if (flag) {
+                        count++
+                        val solution = Solution()
+                        solution.spend = recipes.sumOf { it.price }
+                        solution.input = recipes
+                        solution.output = results
+                        results.sortBy { it.price }
+                        solution.rate = results.count { it.getOriginItem().price > solution.spend } * 1.0 / results.size
+
+                        if (solution.rate > 0.4) {
+                            solutions.add(solution)
+                        }
                     }
                 }
-                DebugGraphics.LOG_OPTION
             }
+
         }
         service.shutdown()
     }
@@ -174,4 +198,15 @@ object Main {
             DangerLevel.BATTLE_SCARRED
         }
     }
+    /*
+    fun randomItem(chest :String ,level: Level) :Item {
+        //TODO 找出一个收藏品中指定品质中最便宜的
+        chestList.forEach {
+            if (chest == it.name) {
+
+            }
+        }
+    }
+
+     */
 }
