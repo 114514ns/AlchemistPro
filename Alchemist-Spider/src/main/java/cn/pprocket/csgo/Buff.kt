@@ -8,6 +8,7 @@ import cn.pprocket.csgo.item.Item
 import cn.pprocket.csgo.network.HttpUtil
 import cn.pprocket.csgo.network.Proxy
 import com.alibaba.fastjson2.JSON
+import com.alibaba.fastjson2.JSONArray
 import com.alibaba.fastjson2.JSONObject
 import com.alibaba.fastjson2.JSONPObject
 import java.io.File
@@ -22,6 +23,7 @@ object Buff {
     //var pool = Executors.newFixedThreadPool(8)
     fun getChests(): MutableList<Chest> {
         var result = mutableListOf<Chest>()
+        val ids = mutableListOf<Int>()
         for (i in 1..2) {
             var query = "https://buff.163.com/api/market/csgo_container_list?type=${
                 if (i == 1) {
@@ -67,6 +69,9 @@ object Buff {
                     var var1 = it as JSONObject
                     item.name = var1.getString("localized_name")
                     item.chest = chestName
+                    val id = var1.getInteger("goods_id")
+                    item.buffId = id
+                    ids.add(id)
                     var qualityText = it.getJSONObject("goods").getJSONObject("tags").getJSONObject("rarity")
                         .getString("localized_name")
                     when (qualityText) {
@@ -113,6 +118,10 @@ object Buff {
                 result.add(chest)
             }
         }
+        var str = JSONObject.toJSONString(ids)
+        val file = File("ids.json")
+        FileWriter(file).write(str)
+
         return result
     }
 
@@ -205,7 +214,7 @@ object Buff {
                         var levelName = obj.getString("tag_name")
                         var danger = getDamage(levelName)
                         var nameInside = "$shortName ($levelName)"
-                        if (!obj.getString("tag_name").contains("Stat") && !name.equals(nameInside)) { //排除暗金
+                        if (!obj.getString("tag_name").contains("Stat") /*&& !name.equals(nameInside)*/) { //排除暗金
                             var item1 = Item()
                             var price = obj.getString("sell_min_price").toFloat()
                             var id = obj.getInteger("goods_id")
@@ -226,7 +235,7 @@ object Buff {
                             }
                             item1.higher = higher
                             item1.chest = chest.name
-                            if (!item1.name.contains("纪念品")) {
+                            if (!item1.name.contains("纪念品") && !item1.name.contains("武器箱")) {
                                 result.add(item1)
                             }
                         }
@@ -265,6 +274,10 @@ object Buff {
             }
         }
         return chest
+    }
+
+    fun randomDanger(level: DangerLevel) {
+
     }
 
     private fun getDamage(string: String): DangerLevel {
@@ -309,7 +322,10 @@ fun main() {
         OPCode.GEN_ITEMS.ordinal -> {
 
             Buff.chestList = JSON.parseArray(FileReader(File("chests.json")).readString(), Chest::class.java)
-            var items = Buff.getItems(Buff.getIds())
+            val idFile = File("ids.json")
+            var string = FileReader(idFile).readString()
+            var ids = JSONArray.parse(string).toList() as List<Int>
+            var items = Buff.getItems(ids)
             FileWriter.create(File("items.json")).write(JSONObject.toJSONString(items))
         }
 

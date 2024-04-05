@@ -21,10 +21,6 @@ object Main {
     @Throws(InterruptedException::class)
     @JvmStatic
     fun main(args: Array<String>) {
-        val items = FileReader.create(File("items.json")).readString()
-        val objects = JSON.parseArray(items).toArray(
-            Item::class.java
-        )
         //Tools.writeFile(gson.toJson(itemList),"items.json");
         //System.exit(0);
         //Tools.writeFile(gson.toJson(itemList),"items.json");
@@ -33,11 +29,20 @@ object Main {
         val results: MutableList<Result> = ArrayList<Result>()
         val service = Executors.newFixedThreadPool(12)
         for (l in 0..4) {
-            for (j in 0 until 10000000) {
+
+            while (true) {
                 val recipes = mutableListOf<Item>()
-                val result = mutableListOf<Item>()
-                for (k in 0..9) {
-                    recipes.add(RandomUtil.randomEle(itemList))
+                var count = 0
+                while (true) {
+                    val item = RandomUtil.randomEle(itemList)
+                    if (item.level.ordinal == l) {
+                        item.dangerValue = randomDanger(item.name)
+                        recipes.add(item)
+                        count++
+                        if (count == 10) {
+                            break
+                        }
+                    }
                 }
                 var average = getAverageAmount(recipes)
                 val map = mutableMapOf<String, Int>()
@@ -59,15 +64,22 @@ object Main {
                     }
                     newMap[list] = it.value.toDouble() / 10
                 }
-                var times = 0;
-                newMap.forEach {
+                var flag = true
+                newMap.forEach loop@{
                     val total = it.value
                     val size = it.key.size
-                    it.key.forEach {
+                    var itemByLevel = getItemsByLevel(it.key[0].chest, it.key[0].level)
+                    itemByLevel.forEach {
                         val result = Result()
-                        result.setOriginItem(it)
-                        result.setRate(total / size)
-                        times++;
+                        var wearAmount = getWearAmount(average.toFloat())
+                        var specificItem = getSpecificItem(it.name, wearAmount)
+                        if (specificItem.name == null) {
+                            flag = false
+
+                        }
+                        result.setOriginItem(specificItem)
+                        result.setRate(total / itemByLevel.size)
+                        result.setAmountValue(average.toFloat())
                         results.add(result)
                     }
                 }
@@ -81,12 +93,18 @@ object Main {
         var total = 0.0
         for (i in items.indices) {
             val item = items[i]
-            total += getMinAmount(item!!)
+            total += getMinAmount(item!!.name)
         }
         return total / 10
     }
+    /*
+    fun getItemByName(name : String) {
+        itemList.f
+    }
+    */
 
-    fun getItemByLevel(chest: String, level: Level): List<Item> {
+
+    fun getItemsByLevel(chest: String, level: Level): List<Item> {
         val result = mutableListOf<Item>()
         Chests.forName(chest).items.forEach {
             if (it.level == level) {
@@ -96,10 +114,39 @@ object Main {
         return result
     }
 
+    fun getSpecificItem(name: String, level: DangerLevel): Item {
+        var found = false
+        var item: Item? = null
+        itemList.forEach loop@{
+            if (it.name.contains(name)) {
+                if (it.danger == level) {
+                    item = it
+                    return@loop
+                }
+            }
+        }
+        return item ?: Item()
+    }
 
-    fun getMinAmount(item: Item): Double {
-        val name = item.name
-        return if (item.name.contains("崭新出厂")) {
+
+    fun getMinAmount(name: String): Double {
+        return if (name.contains("崭新出厂")) {
+            0.01
+        } else if (name.contains("略有磨损")) {
+            0.07
+        } else if (name.contains("久经沙场")) {
+            0.15
+        } else if (name.contains("破损不堪")) {
+            0.38
+        } else if (name.contains("战痕累累")) {
+            0.45
+        } else {
+            1.14514
+        }
+    }
+
+    fun randomDanger(name: String): Double {
+        return if (name.contains("崭新出厂")) {
             RandomUtil.randomDouble(0.01, 0.06)
         } else if (name.contains("略有磨损")) {
             RandomUtil.randomDouble(0.07, 0.14)

@@ -21,6 +21,7 @@ public class Item {
     private int buffId;
 
     private DangerLevel danger;
+    private double dangerValue;
 
     private List<String> higher;
 
