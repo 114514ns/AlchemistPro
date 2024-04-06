@@ -26,11 +26,11 @@ object Main {
         //Tools.writeFile(gson.toJson(itemList),"items.json");
         //System.exit(0);
         val start = System.currentTimeMillis()
-
+        patchPrice()
         val service = Executors.newFixedThreadPool(8)
         val solutions = mutableListOf<Solution>()
 
-        for (l in 0..4) {
+        for (l in 2..4) {
             var times = 0
 
             while (true) {
@@ -42,14 +42,14 @@ object Main {
                     val recipes = mutableListOf<Item>()
                     var count = 0
                     while (true) {
-                        val item = RandomUtil.randomEle(itemList)
-                        if (item.level.ordinal == l) {
-                            item.dangerValue = randomDanger(item.name)
+                        val item = randomItem(l)
+                        item.dangerValue = randomDanger(item.name)
+                        if (item.price != 0.0) { // 如果price为0，说明buff上没得卖
                             recipes.add(item)
                             count++
-                            if (count == 10) {
-                                break
-                            }
+                        }
+                        if (count == 10) {
+                            break
                         }
                     }
                     val results: MutableList<Result> = ArrayList<Result>()
@@ -100,7 +100,9 @@ object Main {
                         solution.input = recipes
                         solution.output = results
                         results.sortBy { it.price }
-                        solution.rate = results.count { it.getOriginItem().price > solution.spend } * 1.0 / results.size
+                        //solution.rate = results.count { it.getOriginItem().price > solution.spend } * 1.0 / results.size
+                        solution.rate =
+                            results.sumByDouble { if (it.getOriginItem().price > solution.spend) it.rate else 0.0 }
 
                         if (solution.rate > 0.4) {
                             solutions.add(solution)
@@ -198,15 +200,33 @@ object Main {
             DangerLevel.BATTLE_SCARRED
         }
     }
-    /*
-    fun randomItem(chest :String ,level: Level) :Item {
-        //TODO 找出一个收藏品中指定品质中最便宜的
-        chestList.forEach {
-            if (chest == it.name) {
 
+    fun randomItem(level: Int): Item {
+        //TODO 找出一个收藏品中指定品质中最便宜的
+        var chest = RandomUtil.randomEle(chestList)
+        var low = 99999.0
+        var item: Item? = null
+        chest!!.items.forEach {
+            if (it.price < low && it.level.ordinal == level) {
+                item = it
             }
         }
+        val result = RandomUtil.randomEle(itemList.filter { it.name.contains(item!!.name) })
+        var sortedBy = itemList.filter { it.level.ordinal == level && chest.name == it.chest }.sortedBy { it.price }.subList(0,4)
+        return RandomUtil.randomEle(sortedBy)
+    }
+    fun patchPrice() {
+        val start = System.currentTimeMillis()
+        for (chest in chestList) {
+            val list = mutableListOf<Item>()
+            for (item in chest.items) {
+                var specificItem = getSpecificItem(item.name, DangerLevel.FIELD_TESTED)
+                item.price = specificItem.price
+                list.add(item)
+            }
+            chest.items = list
+        }
+        println("Patch耗时： ${System.currentTimeMillis()-start}ms")
     }
 
-     */
 }
