@@ -3,17 +3,16 @@ package cn.pprocket.csgo
 
 import cn.hutool.core.io.file.FileReader
 import cn.hutool.core.io.file.FileWriter
-import cn.pprocket.csgo.Buff.getIds
 import cn.pprocket.csgo.item.Item
 import cn.pprocket.csgo.network.HttpUtil
 import cn.pprocket.csgo.network.Proxy
 import com.alibaba.fastjson2.JSON
 import com.alibaba.fastjson2.JSONArray
 import com.alibaba.fastjson2.JSONObject
-import com.alibaba.fastjson2.JSONPObject
 import java.io.File
 import java.util.*
 import java.util.concurrent.Executors
+import kotlin.system.exitProcess
 
 object Buff {
     var chestList: MutableList<Chest> = mutableListOf()
@@ -124,6 +123,7 @@ object Buff {
 
         return result
     }
+    @Deprecated("")
 
     fun getIds(): List<Int> {
         var start = System.currentTimeMillis()
@@ -243,8 +243,15 @@ object Buff {
                     System.console()
                     if (it == ids.last()) {
                         println("爬取完成")
-                        t.stop()
+                        result.removeIf { it.chest == null }
+                        t.interrupt()
                         service.shutdown()
+                        val file = File("items.json")
+                        if (!file.exists()) {
+                            file.createNewFile()
+                        }
+                        FileWriter.create(file).write(JSONObject.toJSONString(result))
+                        exitProcess(0)
                     }
                 }
 
@@ -254,9 +261,6 @@ object Buff {
             Thread.sleep(100)
         }
 
-        result.removeIf { it.chest == null }
-        result.removeIf { it.level == Level.ANCIENT }
-        t.stop()
 
         return result
     }
@@ -276,9 +280,7 @@ object Buff {
         return chest
     }
 
-    fun randomDanger(level: DangerLevel) {
 
-    }
 
     private fun getDamage(string: String): DangerLevel {
         if (string.contains("崭新出厂")) return DangerLevel.FACTORY_NEW
@@ -326,17 +328,11 @@ fun main() {
             var string = FileReader(idFile).readString()
             var ids = JSONArray.parse(string).toList() as List<Int>
             var items = Buff.getItems(ids)
-            FileWriter.create(File("items.json")).write(JSONObject.toJSONString(items))
+
+
         }
 
-        OPCode.GEN_IDS.ordinal -> {
-            var ids = getIds()
-            val file = File("ids.json")
-            if (!file.exists()) {
-                file.createNewFile()
-            }
-            FileWriter.create(file).write(JSONObject.toJSONString(ids))
-        }
+
 
     }
 }

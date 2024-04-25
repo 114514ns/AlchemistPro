@@ -28,6 +28,10 @@ dependencies {
 
     implementation("com.alibaba.fastjson2:fastjson2:2.0.33")
 }
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
 
 tasks.test {
     useJUnitPlatform()
