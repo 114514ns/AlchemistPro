@@ -68,11 +68,13 @@ object Buff {
                     var var1 = it as JSONObject
                     item.name = var1.getString("localized_name")
                     item.chest = chestName
+                    item.price = var1.getDouble("max_price")
                     val id = var1.getInteger("goods_id")
                     item.buffId = id
                     ids.add(id)
                     var qualityText = it.getJSONObject("goods").getJSONObject("tags").getJSONObject("rarity")
                         .getString("localized_name")
+
                     when (qualityText) {
                         "普通" -> {
                             item.level = Level.MYTHICAL
